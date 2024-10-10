@@ -13,72 +13,76 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Image Editor and ZIP Downloader</h2>
-        <input type="file" id="image-upload" accept="image/jpeg" multiple>
-        <button onclick="processImages()">Edit and Download as ZIP</button>
-        <a id="download-link" class="hidden">Download Edited Images</a>
-    </div>
+<div class="container">
+    <h2>Image Editor and ZIP Downloader</h2>
+    <input type="file" id="image-upload" accept="image/jpeg" multiple>
+    <button onclick="processImages()">Edit and Download as ZIP</button>
+    <a id="download-link" class="hidden">Download Edited Images</a>
+</div>
 
-    <canvas id="canvas" class="hidden"></canvas>
+<canvas id="canvas" class="hidden"></canvas>
 
-    <!-- Include JSZip for creating ZIP files -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+<!-- Include JSZip for creating ZIP files -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
 
-    <script>
-        async function processImages() {
-            const overlayImageUrl = 'cccc.png'; // Overlay image must be in the same directory
-            const overlayImage = await loadImage(overlayImageUrl);
-            const files = document.getElementById('image-upload').files;
-            const zip = new JSZip();
+<script>
+    async function processImages() {
+        const overlayImageUrl = 'cccc.png'; // Overlay image must be in the same directory
+        const overlayImage = await loadImage(overlayImageUrl);
+        const files = document.getElementById('image-upload').files;
+        const zip = new JSZip();
 
-            if (files.length === 0) {
-                alert('Please upload at least one image.');
-                return;
-            }
-
-            for (let file of files) {
-                const img = await loadImage(URL.createObjectURL(file));
-                const editedImage = editImage(img, overlayImage);
-                const blob = await new Promise(resolve => editedImage.toBlob(resolve, 'image/jpeg'));
-                zip.file(file.name, blob);
-            }
-
-            // Generate the ZIP file and provide download link
-            zip.generateAsync({ type: 'blob' }).then(content => {
-                const downloadLink = document.getElementById('download-link');
-                downloadLink.href = URL.createObjectURL(content);
-                downloadLink.download = 'edited-images.zip';
-                downloadLink.textContent = 'Download Edited Images';
-                downloadLink.classList.remove('hidden');
-            });
+        if (files.length === 0) {
+            alert('Please upload at least one image.');
+            return;
         }
 
-        function loadImage(src) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
-                img.src = src;
-            });
+        for (let file of files) {
+            const img = await loadImage(URL.createObjectURL(file));
+            const editedImage = editImage(img, overlayImage);
+            const blob = await new Promise(resolve => editedImage.toBlob(resolve, 'image/jpeg'));
+            zip.file(file.name, blob);
         }
 
-        function editImage(image, overlay) {
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
+        // Generate the ZIP file and provide download link
+        zip.generateAsync({ type: 'blob' }).then(content => {
+            const downloadLink = document.getElementById('download-link');
+            downloadLink.href = URL.createObjectURL(content);
+            downloadLink.download = 'edited-images.zip';
+            downloadLink.textContent = 'Download Edited Images';
+            downloadLink.classList.remove('hidden');
+        });
+    }
 
-            // Set canvas size to match the image size
-            canvas.width = image.width - 40; // 20px crop from left and right
-            canvas.height = image.height - 300; // 100px crop from top, 200px from bottom
+    function loadImage(src) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+            img.src = src;
+        });
+    }
 
-            // Draw the original image cropped
-            ctx.drawImage(image, 20, 100, image.width - 40, image.height - 300, 0, 0, image.width - 40, image.height - 300);
+    function editImage(image, overlay) {
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
 
-            // Draw the overlay on top of the cropped image
-            ctx.drawImage(overlay, 225 - 20, 616 - 100); // Adjusted position after cropping
+        // Calculate new dimensions after cropping
+        const newWidth = image.width - 85 - 85; // 85px crop from left and right
+        const newHeight = image.height - 285 - 385; // 285px crop from top, 385px from bottom
 
-            return canvas;
-        }
-    </script>
+        // Set canvas size to match the new cropped size
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+
+        // Draw the original image cropped
+        ctx.drawImage(image, 85, 285, newWidth, newHeight, 0, 0, newWidth, newHeight);
+
+        // Draw the overlay on top of the cropped image at adjusted position
+        ctx.drawImage(overlay, 225 - 85, 616 - 285); // Adjusted position after cropping
+
+        return canvas;
+    }
+</script>
 </body>
 </html>
