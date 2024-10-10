@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Editor and ZIP Downloader</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: auto; text-align: center; }
+        .hidden { display: none; }
+        input[type="file"] { margin: 10px 0; }
+        button { margin: 10px; padding: 10px 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Image Editor and ZIP Downloader</h2>
+        <input type="file" id="image-upload" accept="image/jpeg" multiple>
+        <button onclick="processImages()">Edit and Download as ZIP</button>
+        <a id="download-link" class="hidden">Download Edited Images</a>
+    </div>
+
+    <canvas id="canvas" class="hidden"></canvas>
+
+    <!-- Include JSZip for creating ZIP files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+
+    <script>
+        async function processImages() {
+            const overlayImageUrl = 'cccc.png'; // Overlay image must be in the same directory
+            const overlayImage = await loadImage(overlayImageUrl);
+            const files = document.getElementById('image-upload').files;
+            const zip = new JSZip();
+
+            if (files.length === 0) {
+                alert('Please upload at least one image.');
+                return;
+            }
+
+            for (let file of files) {
+                const img = await loadImage(URL.createObjectURL(file));
+                const editedImage = editImage(img, overlayImage);
+                const blob = await new Promise(resolve => editedImage.toBlob(resolve, 'image/jpeg'));
+                zip.file(file.name, blob);
+            }
+
+            // Generate the ZIP file and provide download link
+            zip.generateAsync({ type: 'blob' }).then(content => {
+                const downloadLink = document.getElementById('download-link');
+                downloadLink.href = URL.createObjectURL(content);
+                downloadLink.download = 'edited-images.zip';
+                downloadLink.textContent = 'Download Edited Images';
+                downloadLink.classList.remove('hidden');
+            });
+        }
+
+        function loadImage(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+                img.src = src;
+            });
+        }
+
+        function editImage(image, overlay) {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Set canvas size to match the image size
+            canvas.width = image.width - 40; // 20px crop from left and right
+            canvas.height = image.height - 300; // 100px crop from top, 200px from bottom
+
+            // Draw the original image cropped
+            ctx.drawImage(image, 20, 100, image.width - 40, image.height - 300, 0, 0, image.width - 40, image.height - 300);
+
+            // Draw the overlay on top of the cropped image
+            ctx.drawImage(overlay, 225 - 20, 616 - 100); // Adjusted position after cropping
+
+            return canvas;
+        }
+    </script>
+</body>
+</html>
