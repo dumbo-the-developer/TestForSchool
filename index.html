@@ -67,19 +67,39 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
-        // Calculate new dimensions after cropping
-        const newWidth = image.width - 85 - 85; // 85px crop from left and right
-        const newHeight = image.height - 285 - 385; // 285px crop from top, 385px from bottom
+        if (image.width === 325 && image.height === 520) {
+            // New logic for image size 325px x 520px
+            const overlayWidth = 100;
+            const overlayHeight = 20;
+            const newWidth = image.width - 35 - 35; // 35px crop from left and right
+            const newHeight = image.height - 140 - 190; // 140px crop from top, 190px from bottom
 
-        // Set canvas size to match the new cropped size
-        canvas.width = newWidth;
-        canvas.height = newHeight;
+            canvas.width = newWidth;
+            canvas.height = newHeight;
 
-        // Draw the original image cropped
-        ctx.drawImage(image, 85, 285, newWidth, newHeight, 0, 0, newWidth, newHeight);
+            // Draw the original image cropped for 325px x 520px size
+            ctx.drawImage(image, 35, 140, newWidth, newHeight, 0, 0, newWidth, newHeight);
 
-        // Draw the overlay on top of the cropped image at adjusted position
-        ctx.drawImage(overlay, 225 - 85, 616 - 285); // Adjusted position after cropping
+            // Draw the resized overlay on top of the cropped image at the specified position
+            ctx.drawImage(overlay, 0, 0, overlay.width, overlay.height, 113 - 35, 308 - 140, overlayWidth, overlayHeight);
+        } else {
+            // Old logic for all other image sizes
+            const left = 85;
+            const upper = 285;
+            const right = image.width - 85;
+            const lower = image.height - 385;
+            const newWidth = right - left;
+            const newHeight = lower - upper;
+
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+
+            // Draw the original image cropped for all other sizes
+            ctx.drawImage(image, left, upper, newWidth, newHeight, 0, 0, newWidth, newHeight);
+
+            // Draw the overlay on top of the cropped image at its original position (adjust if necessary)
+            ctx.drawImage(overlay, 225 - 85, 616 - 285);
+        }
 
         return canvas;
     }
